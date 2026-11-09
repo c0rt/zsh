@@ -1,86 +1,91 @@
 # zsh
 
-Powerful but tastefully minimal zsh configuration.
+A modular Zsh configuration with Starship, fuzzy navigation, Kubernetes
+completion, project SSH configuration, and optional Omarchy integration.
+Based on [radleylewis/zsh](https://github.com/radleylewis/zsh).
 
 ## Dependencies
 
-### Arch
+The main configuration uses `zsh`, `git`, `neovim`, `eza`, `bat`, `fd`, `fzf`,
+`zoxide`, `starship`, and `ripgrep`. A Nerd Font provides the prompt and file icons.
+The current environment configuration targets Linux and exports
+`SHELL=/usr/bin/zsh`; adjust that path for other installations.
+
+On Arch Linux:
 
 ```sh
-paru -S zsh neovim eza bat fd fzf zoxide starship ripgrep
+sudo pacman -S zsh git neovim eza bat fd fzf zoxide starship ripgrep
 ```
 
-### Ubuntu
+Optional tools are enabled when installed:
 
-```sh
-sudo apt install zsh neovim eza bat fd-find fzf ripgrep
-# install zoxide and starship separately
-curl -sSfL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh
-curl -sS https://starship.rs/install.sh | sh
-# Ubuntu installs bat and fd under different names — symlink them so everything works
-ln -s $(which batcat) ~/.local/bin/bat
-ln -s $(which fdfind) ~/.local/bin/fd
-```
+- `mise` for development tool activation and `direnv` for directory environments.
+- `kubectl` for Kubernetes completion and `kubecolor` for colored output.
+- `lf` for a file manager that can change the shell's directory.
+- Omarchy for desktop helpers; its command completion also requires `jq`.
 
-### macOS
-
-```sh
-brew install zsh neovim eza bat fd fzf zoxide starship ripgrep
-```
+On systems that name `bat` and `fd` differently (for example, `batcat` and
+`fdfind`), make the `bat` and `fd` commands available before starting the shell.
 
 ## Setup
 
-**1. Clone the repo**
+Clone the repository:
 
 ```sh
-git clone https://github.com/radleylewis/zsh ~/.config/zsh
+git clone https://github.com/c0rt/zsh ~/.config/zsh
 ```
 
-**2. Point zsh at the config directory**
-
-Add the following to `/etc/zsh/zshenv`:
+Add these lines to `~/.zshenv`, preserving any existing settings:
 
 ```sh
-if [[ -z "$XDG_CONFIG_HOME" ]]
-then
-    export XDG_CONFIG_HOME="$HOME/.config"
-fi
-
-if [[ -d "$XDG_CONFIG_HOME/zsh" ]]
-then
-    export ZDOTDIR="$XDG_CONFIG_HOME/zsh"
-fi
+export ZDOTDIR="${XDG_CONFIG_HOME:-$HOME/.config}/zsh"
+[[ -r "$ZDOTDIR/.zshenv" ]] && source "$ZDOTDIR/.zshenv"
 ```
 
-**3. Set zsh as your default shell**
+Zsh will then load this repository's `.zshrc` for interactive shells. No
+system-wide Zsh file needs to be changed. If an existing `/etc/zsh/zshenv`
+already sets `ZDOTDIR` to this directory, Zsh can load the environment file
+directly; use the setup appropriate to your installation.
+
+To make Zsh your login shell:
 
 ```sh
-chsh -s $(which zsh)
+chsh -s "$(command -v zsh)"
 ```
 
-**4. Create required directories**
+Start a new terminal. History and completion-cache directories are created
+automatically. Plugins are cloned from GitHub on first launch, so that launch
+requires network access.
 
-```sh
-mkdir -p ~/.local/state/zsh   # history
-mkdir -p ~/.cache/zsh         # completion cache
-```
+## Configuration files
 
-**5. Start a new shell**
-
-Plugins are installed automatically on first launch via the built-in plugin manager.
+| File | Purpose |
+|------|---------|
+| `.zshenv` | XDG paths, editor, pager, environment, and Omarchy environment bootstrap |
+| `.zshrc` | History, completion, tool activation, and module loading |
+| `aliases.zsh` | Utility aliases, lf navigation, and lazy Kubernetes completion |
+| `bindings.zsh` | Emacs editing mode and custom keybindings |
+| `fzf.zsh` | File search and preview options |
+| `plugins.zsh` | Plugin installation and updates |
+| `prompt.zsh` | Starship initialization and Kubernetes prompt visibility |
+| `starship.toml` | Prompt appearance and modules |
+| `ssh.zsh` | Project SSH configuration and host completion |
+| `omarchy.zsh` | Optional Omarchy aliases and helpers |
+| `omarchy-ssh.zsh` | SSH terminal cleanup and guarded reconnection on Omarchy |
+| `completions/_omarchy` | Completion from `omarchy commands --json` |
+| `local.zsh` | Optional, ignored personal overrides, loaded last |
 
 ## Plugins
 
-Managed without a third-party plugin manager. Plugins are cloned into `$ZDOTDIR/plugins/` on first launch.
+The built-in loader clones these plugins into the ignored `plugins/` directory:
 
 | Plugin | Purpose |
 |--------|---------|
 | [fast-syntax-highlighting](https://github.com/zdharma-continuum/fast-syntax-highlighting) | Syntax highlighting |
-| [zsh-autosuggestions](https://github.com/zsh-users/zsh-autosuggestions) | Fish-style inline suggestions |
-| [zsh-history-substring-search](https://github.com/zsh-users/zsh-history-substring-search) | Up/down arrow history filtering |
-| [zsh-vi-mode](https://github.com/jeffreytse/zsh-vi-mode) | Vi keybindings |
+| [zsh-autosuggestions](https://github.com/zsh-users/zsh-autosuggestions) | Inline suggestions |
+| [zsh-history-substring-search](https://github.com/zsh-users/zsh-history-substring-search) | Up/down history search |
 
-To update all plugins:
+The line editor uses Emacs mode. To update installed plugins:
 
 ```sh
 zplugin-update
@@ -90,14 +95,62 @@ zplugin-update
 
 | Key | Action |
 |-----|--------|
-| `Ctrl+R` | Fuzzy history search (fzf) |
-| `Ctrl+T` | Fuzzy file search including hidden files (fzf + fd) |
-| `Ctrl+F` | Fuzzy file search excluding hidden files (fzf + fd) |
-| `Ctrl+→` | Move forward one word |
-| `Ctrl+←` | Move backward one word |
-| `↑` / `↓` | History search by prefix |
+| `Ctrl+R` | Fuzzy history search through fzf |
+| `Ctrl+T` | Fuzzy file search including hidden files |
+| `Ctrl+F` | Fuzzy file search excluding hidden files |
+| `Ctrl+→` / `Ctrl+←` | Move forward/backward one word |
+| `↑` / `↓` | Search history by substring |
 | `Ctrl+\` | Toggle autosuggestions |
 
-## Starship Config
+The fzf bindings require its shell integration. The configuration checks
+Homebrew, Arch, Ubuntu, and `~/.fzf` installation paths.
 
-Included in the repo at [`starship.toml`](./starship.toml) and loaded automatically via `STARSHIP_CONFIG` in `.zshenv`. Requires a [Nerd Font](https://www.nerdfonts.com) in your terminal.
+## Prompt and Kubernetes
+
+[Starship configuration](./starship.toml) is selected through `STARSHIP_CONFIG`.
+It shows the directory, Git state, language versions, command duration,
+Terraform workspace, time, and command status.
+
+The Kubernetes context appears while `kubectl`, `kubecolor`, or `k` is typed as
+a command. The `k` alias runs `kubectl`; when `kubecolor` is available at shell
+startup, `kubectl` is aliased to it. Kubernetes completion loads on first use.
+
+## SSH integration
+
+The `ssh`, `scp`, and `sftp` wrappers search upward from the current directory
+for `files/.ssh/config`. When found, they include the user's `~/.ssh/config`
+first and the project configuration second. Use these wrappers only in
+projects whose SSH configuration you trust.
+
+On Omarchy, SSH also resets terminal mouse, focus, and alternate-screen modes
+when a session ends. Reconnection is attempted after exit status 255 only when
+both input and output are terminals, the session lasted at least 30 seconds,
+and the invocation has a destination without a remote command. Resolved
+`RemoteCommand` settings also disable reconnection. This is a heuristic based
+on SSH's exit status and arguments; `Ctrl+C` stops the retry loop.
+
+## Omarchy integration
+
+When `/usr/share/omarchy` exists, the configuration loads Omarchy aliases and
+helpers. The `ga <branch>` helper creates a sibling Git worktree, trusts it
+with mise, and changes into it. Optional tmux, herdr, port-forwarding, rsync,
+and compression helpers run through their packaged Bash definitions.
+
+The integration includes shortcuts for optional tools such as Docker, Rails,
+Claude, Codex, and OpenCode. Their installation is separate from this config.
+Terminal and tmux shell selection are configured outside this repository.
+
+## Personal settings
+
+Put machine-specific paths and overrides in `local.zsh`. It is ignored by Git
+and sourced after the shared configuration. History lives at
+`${XDG_STATE_HOME:-$HOME/.local/state}/zsh/history`; completion metadata lives
+under `${XDG_CACHE_HOME:-$HOME/.cache}/zsh`.
+
+Before publishing changes, review the staged files and commit history as well
+as the working files: removing personal information from the current version
+does not remove it from earlier commits.
+
+## License
+
+[MIT](./LICENSE). The original copyright notice is retained.

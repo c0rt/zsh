@@ -2,23 +2,24 @@
 
 add_newline = false
 
-format = "$directory$os$git_branch$git_status$nodejs$rust$golang$php $character"
+format = "$directory$os$git_branch$git_status$rust$golang$php$fill$status$cmd_duration$terraform$kubernetes$time\n$sudo$character"
 
-[os]
-disabled = false
-format = "[$symbol](#blue) "
+[fill]
+symbol = " "
 
-[os.symbols]
-Ubuntu  = "󰕈"
-Artix   = "󰣇"
-Arch    = "󰣇"
-CachyOS = "󰣇"
-Macos   = ""
+[time]
+disabled    = false
+format      = "[$time](bold white)"
+time_format = "%H:%M:%S"
+
+[cmd_duration]
+min_time = 2000
+format   = "[󰔛 $duration](bold yellow) "
 
 [directory]
 format            = "[$path](cyan) "
-truncation_length = 4
-truncate_to_repo  = true
+truncation_length = 0
+truncate_to_repo  = false
 
 [git_branch]
 symbol = ""
@@ -35,10 +36,6 @@ untracked  = "[?$count ](bold white)"
 deleted    = "[✘$count ](bold red)"
 conflicted = "[⚡$count ](bold red)"
 
-[nodejs]
-symbol = ""
-format = "[$symbol $version](green) "
-
 [rust]
 symbol = ""
 format = "[$symbol $version](red) "
@@ -50,6 +47,37 @@ format = "[$symbol $version](cyan) "
 [php]
 symbol = ""
 format = "[$symbol $version](purple) "
+
+[kubernetes]
+disabled = false
+# Only shown after a kubectl command (STARSHIP_KUBE is set by a preexec hook in prompt.zsh)
+detect_env_vars = ["STARSHIP_KUBE"]
+symbol   = "󱃾"
+format   = "[$symbol $context( \\($namespace\\))]($style) "
+style    = "bold blue"
+
+[[kubernetes.contexts]]
+context_pattern = "^z-.*"
+style           = "bold red"
+
+[[kubernetes.contexts]]
+context_pattern = "^teleport.*"
+style           = "bold yellow"
+
+[terraform]
+symbol = "󱁢"
+format = "[$symbol $workspace](purple) "
+
+[sudo]
+disabled = false
+symbol   = "󰌋"
+format   = "[$symbol]($style) "
+style    = "bold yellow"
+
+[status]
+disabled = false
+symbol   = "✘"
+format   = "[$symbol $status]($style) "
 
 [character]
 success_symbol = "[❯](green)"

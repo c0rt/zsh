@@ -1,0 +1,20 @@
+#compdef omarchy
+_omarchy() {
+  local prefix="${(j: :)words[1,CURRENT-1]} " line suffix
+  local -a candidates
+  while IFS= read -r line; do
+    [[ $line == "$prefix"* ]] || continue
+    suffix=${line#"$prefix"}
+    candidates+=("${suffix%% *}")
+  done < <(omarchy commands --json | command jq -r '.commands[] | select(.hidden != true) | .routes[]')
+  candidates=("${(@u)candidates}")
+  if (( CURRENT == 2 )); then candidates+=(commands); fi
+  if (( $#candidates )); then
+    compadd -- "${candidates[@]}"
+  elif [[ $words[2] == commands ]]; then
+    compadd -- --all --json --markdown --check
+  else
+    _files
+  fi
+}
+_omarchy "$@"

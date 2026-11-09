@@ -8,7 +8,10 @@
 #   Prompt:       starship
 #   Navigation:   zoxide, fzf, fd
 #   CLI tools:    eza, bat, nvim, ripgrep
-#   Node:         nvm
+#   Tools:        mise (Node, uv); uv manages Python
+
+mkdir -p "$XDG_STATE_HOME/zsh" "$XDG_CACHE_HOME/zsh"
+fpath=("$ZDOTDIR/completions" $fpath)
 
 # =========================================================
 # History
@@ -43,7 +46,9 @@ if [[ -f ~/.config/lf/icons ]]; then
 fi
 
 # Initialize zoxide
-eval "$(zoxide init zsh)"
+if [ -z "$DISABLE_ZOXIDE" ]; then
+    eval "$(zoxide init --cmd cd zsh)"
+fi
 
 # =========================================================
 # Completion
@@ -107,19 +112,27 @@ source "$ZDOTDIR/fzf.zsh"
 source "$ZDOTDIR/aliases.zsh"
 
 # Custom keybindings
-source "$ZDOTDIR/bindings.zsh"
+
 
 # Plugins and plugin manager
 source "$ZDOTDIR/plugins.zsh"
+source "$ZDOTDIR/bindings.zsh"
 
 # Prompt/theme
 source "$ZDOTDIR/prompt.zsh"
 
+# custom SSH integration
+source "$ZDOTDIR/ssh.zsh"
 
-# =========================================================
-# User Custom Configurations
-# =========================================================
 
-if [[ -f "$ZDOTDIR/local.zsh" ]]; then
-  source "$ZDOTDIR/local.zsh"
+# Omarchy integration is optional on other distributions.
+[[ -d /usr/share/omarchy ]] && source "$ZDOTDIR/omarchy.zsh"
+
+if command -v mise >/dev/null 2>&1; then
+  eval "$(mise activate zsh)"
 fi
+
+if command -v direnv >/dev/null 2>&1; then
+  eval "$(direnv hook zsh)"
+fi
+[[ -r "$ZDOTDIR/local.zsh" ]] && source "$ZDOTDIR/local.zsh"

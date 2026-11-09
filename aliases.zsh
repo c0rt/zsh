@@ -31,10 +31,11 @@ alias df='df -h'
 alias -- -='cd -'  # -- prevents - being parsed as a flag; cd - jumps to previous directory
 
 lf() { # zsh follow lf navigation
+    local tmp dir
     tmp=$(mktemp)
     command lf -last-dir-path="$tmp" "$@"
     if [ -f "$tmp" ]; then
-        dir=$(cat "$tmp")
+        dir=$(command cat "$tmp")
         rm -f "$tmp"
         [ -d "$dir" ] && [ "$dir" != "$(pwd)" ] && cd "$dir"
     fi
@@ -47,6 +48,28 @@ lf() { # zsh follow lf navigation
 alias vim='nvim'
 
 # =========================================================
+# Kubernetes
+# =========================================================
+
+# Define the shortcut even when kubectl is installed after this shell starts.
+alias k='kubectl'
+
+if (( $+commands[kubectl] )); then
+    # Colorized kubectl output; k expands through kubectl to kubecolor
+    (( $+commands[kubecolor] )) && alias kubectl='kubecolor'
+    # zsh ships no kubectl completion; generate it lazily on first <Tab>
+    # (kubectl completion zsh defines _kubectl and compdefs it for kubectl)
+    _kubectl_lazy() {
+        unfunction _kubectl_lazy
+        source <(command kubectl completion zsh)
+        compdef k=kubectl
+        (( $+commands[kubecolor] )) && compdef kubecolor=kubectl
+        _kubectl "$@"
+    }
+    compdef _kubectl_lazy kubectl k kubecolor
+fi
+
+# =========================================================
 # Git
 # =========================================================
 
@@ -54,8 +77,3 @@ alias glog='PAGER="less -F -X" git log'                              # -F quit i
 alias gadog='PAGER="less -F -X" git log --all --decorate --oneline --graph'
 alias dotfiles='git --git-dir=$HOME/.dotfiles --work-tree=$HOME'
 
-# =========================================================
-# Video
-# =========================================================
-
-alias stream='mpv av://v4l2:/dev/video4 --fullscreen --demuxer-lavf-o=input_format=mjpeg,framerate=30 --profile=low-latency --untimed'
